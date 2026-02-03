@@ -135,14 +135,33 @@ export class SnippetManager {
     return JSON.stringify(this.data, null, 2);
   }
 
-  // Import data from JSON string (merges with existing data)
-  async importData(jsonString: string, replace: boolean = false): Promise<{ folders: number; snippets: number }> {
+  // Import data from JSON string
+  // mode: 'replace' = overwrite all, 'merge' = update matching IDs + add new, 'append' = add all as new items
+  async importData(jsonString: string, mode: 'replace' | 'merge' | 'append'): Promise<{ folders: number; snippets: number }> {
     const imported = JSON.parse(jsonString) as SnippetData;
 
-    if (replace) {
+    if (mode === 'replace') {
       this.data = imported;
+    } else if (mode === 'merge') {
+      for (const folder of imported.folders) {
+        const existingIndex = this.data.folders.findIndex(f => f.id === folder.id);
+        if (existingIndex !== -1) {
+          this.data.folders[existingIndex] = folder;
+        } else {
+          this.data.folders.push(folder);
+        }
+      }
+
+      for (const snippet of imported.snippets) {
+        const existingIndex = this.data.snippets.findIndex(s => s.id === snippet.id);
+        if (existingIndex !== -1) {
+          this.data.snippets[existingIndex] = snippet;
+        } else {
+          this.data.snippets.push(snippet);
+        }
+      }
     } else {
-      // Generate new IDs to avoid conflicts
+      // Append: generate new IDs to avoid conflicts
       const idMap = new Map<string, string>();
 
       for (const folder of imported.folders) {

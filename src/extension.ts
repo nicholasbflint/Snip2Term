@@ -206,14 +206,15 @@ export function activate(context: vscode.ExtensionContext) {
 
         const action = await vscode.window.showQuickPick(
           [
-            { label: 'Merge', description: 'Add imported snippets to existing ones' },
-            { label: 'Replace', description: 'Replace all existing snippets' }
+            { label: 'Merge', description: 'Update matching items by ID, add new ones', value: 'merge' as const },
+            { label: 'Append', description: 'Add all as new items (duplicates possible)', value: 'append' as const },
+            { label: 'Replace', description: 'Replace all existing snippets entirely', value: 'replace' as const }
           ],
           { placeHolder: 'How should snippets be imported?' }
         );
 
         if (action) {
-          const result = await snippetManager.importData(jsonString, action.label === 'Replace');
+          const result = await snippetManager.importData(jsonString, action.value);
           vscode.window.showInformationMessage(
             `Imported ${result.folders} folders and ${result.snippets} snippets!`
           );

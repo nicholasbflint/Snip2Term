@@ -184,11 +184,12 @@ function activate(context) {
             const content = await vscode.workspace.fs.readFile(uris[0]);
             const jsonString = Buffer.from(content).toString('utf8');
             const action = await vscode.window.showQuickPick([
-                { label: 'Merge', description: 'Add imported snippets to existing ones' },
-                { label: 'Replace', description: 'Replace all existing snippets' }
+                { label: 'Merge', description: 'Update matching items by ID, add new ones', value: 'merge' },
+                { label: 'Append', description: 'Add all as new items (duplicates possible)', value: 'append' },
+                { label: 'Replace', description: 'Replace all existing snippets entirely', value: 'replace' }
             ], { placeHolder: 'How should snippets be imported?' });
             if (action) {
-                const result = await snippetManager.importData(jsonString, action.label === 'Replace');
+                const result = await snippetManager.importData(jsonString, action.value);
                 vscode.window.showInformationMessage(`Imported ${result.folders} folders and ${result.snippets} snippets!`);
             }
         }
