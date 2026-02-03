@@ -1,0 +1,153 @@
+{
+  "name": "snip2term",
+  "displayName": "Snip2Term",
+  "description": "Organize terminal snippets and send them to the terminal with a click",
+  "version": "0.0.1",
+  "publisher": "snip2term",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "snip2term",
+          "title": "Snip2Term",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "views": {
+      "snip2term": [
+        {
+          "id": "snip2termView",
+          "name": "Snippets",
+          "icon": "$(terminal)",
+          "contextualTitle": "Snip2Term"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "snip2term.createFolderAtRoot",
+        "title": "New Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "snip2term.createSnippetAtRoot",
+        "title": "New Snippet",
+        "icon": "$(add)"
+      },
+      {
+        "command": "snip2term.createFolder",
+        "title": "New Folder",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "snip2term.createSnippet",
+        "title": "New Snippet",
+        "icon": "$(add)"
+      },
+      {
+        "command": "snip2term.editSnippet",
+        "title": "Edit Snippet"
+      },
+      {
+        "command": "snip2term.rename",
+        "title": "Rename"
+      },
+      {
+        "command": "snip2term.delete",
+        "title": "Delete"
+      },
+      {
+        "command": "snip2term.runSnippet",
+        "title": "Run in Terminal"
+      },
+      {
+        "command": "snip2term.pasteSnippet",
+        "title": "Paste to Terminal"
+      },
+      {
+        "command": "snip2term.exportSnippets",
+        "title": "Snip2Term: Export Snippets",
+        "icon": "$(export)"
+      },
+      {
+        "command": "snip2term.importSnippets",
+        "title": "Snip2Term: Import Snippets",
+        "icon": "$(import)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "snip2term.createFolderAtRoot",
+          "when": "view == snip2termView",
+          "group": "navigation"
+        },
+        {
+          "command": "snip2term.createSnippetAtRoot",
+          "when": "view == snip2termView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "snip2term.createFolder",
+          "when": "view == snip2termView && viewItem == folder",
+          "group": "1_create@1"
+        },
+        {
+          "command": "snip2term.createSnippet",
+          "when": "view == snip2termView && viewItem == folder",
+          "group": "1_create@2"
+        },
+        {
+          "command": "snip2term.runSnippet",
+          "when": "view == snip2termView && viewItem == snippet",
+          "group": "1_run@1"
+        },
+        {
+          "command": "snip2term.pasteSnippet",
+          "when": "view == snip2termView && viewItem == snippet",
+          "group": "1_run@2"
+        },
+        {
+          "command": "snip2term.editSnippet",
+          "when": "view == snip2termView && viewItem == snippet",
+          "group": "2_edit@1"
+        },
+        {
+          "command": "snip2term.rename",
+          "when": "view == snip2termView",
+          "group": "2_edit@2"
+        },
+        {
+          "command": "snip2term.delete",
+          "when": "view == snip2termView",
+          "group": "3_delete"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.0"
+  }
+}
