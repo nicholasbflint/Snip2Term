@@ -176,7 +176,27 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Export snippets
+  // Export a single folder
+  context.subscriptions.push(
+    vscode.commands.registerCommand('snip2term.exportFolder', async (treeItem: SnippetTreeItem) => {
+      if (!isFolder(treeItem.item)) {
+        return;
+      }
+
+      const uri = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(`${treeItem.item.name}.json`),
+        filters: { 'JSON': ['json'] }
+      });
+
+      if (uri) {
+        const data = snippetManager.exportFolder(treeItem.item.id);
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(data, 'utf8'));
+        vscode.window.showInformationMessage(`Folder "${treeItem.item.name}" exported successfully!`);
+      }
+    })
+  );
+
+  // Export all snippets
   context.subscriptions.push(
     vscode.commands.registerCommand('snip2term.exportSnippets', async () => {
       const uri = await vscode.window.showSaveDialog({

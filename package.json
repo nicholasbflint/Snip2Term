@@ -2,7 +2,7 @@
   "name": "snip2term",
   "displayName": "Snip2Term",
   "description": "Organize terminal snippets and send them to the terminal with a click",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "snip2term",
   "engines": {
     "vscode": "^1.85.0"
@@ -82,6 +82,10 @@
         "command": "snip2term.importSnippets",
         "title": "Snip2Term: Import Snippets",
         "icon": "$(import)"
+      },
+      {
+        "command": "snip2term.exportFolder",
+        "title": "Export Folder"
       }
     ],
     "menus": {
@@ -122,6 +126,11 @@
           "command": "snip2term.editSnippet",
           "when": "view == snip2termView && viewItem == snippet",
           "group": "2_edit@1"
+        },
+        {
+          "command": "snip2term.exportFolder",
+          "when": "view == snip2termView && viewItem == folder",
+          "group": "2_edit@0"
         },
         {
           "command": "snip2term.rename",

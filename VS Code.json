@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "id": "1770144771501-esfh08p2b",
+      "name": "VS Code",
+      "parentId": null
+    },
+    {
+      "id": "1770144777980-esop24pqv",
+      "name": "Extension Dev",
+      "parentId": "1770144771501-esfh08p2b"
+    }
+  ],
+  "snippets": [
+    {
+      "id": "1770144797182-dfweekvyn",
+      "name": "Package & Compile Extension",
+      "content": "npm run compile && vsce package --allow-missing-repository",
+      "parentId": "1770144777980-esop24pqv"
+    }
+  ]
+}

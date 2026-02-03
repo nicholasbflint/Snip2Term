@@ -135,6 +135,33 @@ export class SnippetManager {
     return JSON.stringify(this.data, null, 2);
   }
 
+  // Export a single folder and all its descendants
+  exportFolder(folderId: string): string {
+    const folders: Folder[] = [];
+    const snippets: Snippet[] = [];
+
+    const collectChildren = (id: string) => {
+      const folder = this.data.folders.find(f => f.id === id);
+      if (folder) {
+        folders.push(folder);
+      }
+      snippets.push(...this.data.snippets.filter(s => s.parentId === id));
+      const childFolders = this.data.folders.filter(f => f.parentId === id);
+      for (const child of childFolders) {
+        collectChildren(child.id);
+      }
+    };
+
+    collectChildren(folderId);
+
+    // Set the root folder's parentId to null so it imports at top level
+    if (folders.length > 0) {
+      folders[0] = { ...folders[0], parentId: null };
+    }
+
+    return JSON.stringify({ folders, snippets }, null, 2);
+  }
+
   // Import data from JSON string
   // mode: 'replace' = overwrite all, 'merge' = update matching IDs + add new, 'append' = add all as new items
   async importData(jsonString: string, mode: 'replace' | 'merge' | 'append'): Promise<{ folders: number; snippets: number }> {
