@@ -17,7 +17,22 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(treeView);
 
-  // Register commands - Root level creation (from toolbar)
+  // Helper to get parent folder ID from current selection
+  const getSelectedFolderId = (): string | null => {
+    const selected = treeView.selection[0];
+    if (!selected) {
+      return null;
+    }
+    const item = selected.item;
+    // If folder is selected, create inside it
+    // If snippet is selected, create in its parent folder
+    if ('content' in item) {
+      return item.parentId;
+    }
+    return item.id;
+  };
+
+  // Register commands - Toolbar creation (respects selection)
   context.subscriptions.push(
     vscode.commands.registerCommand('snip2term.createFolderAtRoot', async () => {
       const name = await vscode.window.showInputBox({
@@ -26,7 +41,8 @@ export function activate(context: vscode.ExtensionContext) {
       });
 
       if (name) {
-        await snippetManager.createFolder(name, null);
+        const parentId = getSelectedFolderId();
+        await snippetManager.createFolder(name, parentId);
       }
     })
   );
@@ -48,7 +64,8 @@ export function activate(context: vscode.ExtensionContext) {
       });
 
       if (content !== undefined) {
-        await snippetManager.createSnippet(name, content, null);
+        const parentId = getSelectedFolderId();
+        await snippetManager.createSnippet(name, content, parentId);
       }
     })
   );
