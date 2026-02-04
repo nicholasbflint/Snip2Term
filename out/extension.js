@@ -44,9 +44,12 @@ let treeProvider;
 function activate(context) {
     snippetManager = new snippetManager_1.SnippetManager(context);
     treeProvider = new snippetTreeProvider_1.SnippetTreeProvider(snippetManager);
+    const dragAndDropController = new snippetTreeProvider_1.SnippetDragAndDropController(snippetManager);
     const treeView = vscode.window.createTreeView('snip2termView', {
         treeDataProvider: treeProvider,
-        showCollapseAll: true
+        showCollapseAll: true,
+        dragAndDropController,
+        canSelectMany: true
     });
     context.subscriptions.push(treeView);
     // Helper to get parent folder ID from current selection

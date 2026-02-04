@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SnippetManager } from './snippetManager';
-import { SnippetTreeProvider, SnippetTreeItem } from './snippetTreeProvider';
+import { SnippetTreeProvider, SnippetTreeItem, SnippetDragAndDropController } from './snippetTreeProvider';
 import { Snippet, isSnippet, isFolder } from './types';
 
 let snippetManager: SnippetManager;
@@ -10,9 +10,13 @@ export function activate(context: vscode.ExtensionContext) {
   snippetManager = new SnippetManager(context);
   treeProvider = new SnippetTreeProvider(snippetManager);
 
+  const dragAndDropController = new SnippetDragAndDropController(snippetManager);
+
   const treeView = vscode.window.createTreeView('snip2termView', {
     treeDataProvider: treeProvider,
-    showCollapseAll: true
+    showCollapseAll: true,
+    dragAndDropController,
+    canSelectMany: true
   });
 
   context.subscriptions.push(treeView);
