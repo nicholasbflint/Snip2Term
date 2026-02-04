@@ -166,7 +166,12 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      await sendToTerminal(snippet.content, false);
+      const resolved = await resolvePlaceholders(snippet.content);
+      if (resolved === undefined) {
+        return;
+      }
+
+      await sendToTerminal(resolved, false);
     })
   );
 
@@ -176,7 +181,12 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      await sendToTerminal(treeItem.item.content, true);
+      const resolved = await resolvePlaceholders(treeItem.item.content);
+      if (resolved === undefined) {
+        return;
+      }
+
+      await sendToTerminal(resolved, true);
     })
   );
 
@@ -246,6 +256,43 @@ export function activate(context: vscode.ExtensionContext) {
       }
     })
   );
+}
+
+async function resolvePlaceholders(content: string): Promise<string | undefined> {
+  const regex = /\{prompt:\s*([^;}]+?)(?:;\s*list:\s*([^}]+))?\}/g;
+  const matches = [...content.matchAll(regex)];
+
+  if (matches.length === 0) {
+    return content;
+  }
+
+  let resolved = content;
+  for (const match of matches) {
+    const fullMatch = match[0];
+    const promptText = match[1].trim();
+    const listStr = match[2];
+
+    let value: string | undefined;
+
+    if (listStr) {
+      const items = listStr.split(',').map(s => s.trim());
+      value = await vscode.window.showQuickPick(items, {
+        placeHolder: promptText
+      });
+    } else {
+      value = await vscode.window.showInputBox({
+        prompt: promptText
+      });
+    }
+
+    if (value === undefined) {
+      return undefined;
+    }
+
+    resolved = resolved.replace(fullMatch, value);
+  }
+
+  return resolved;
 }
 
 async function sendToTerminal(content: string, execute: boolean): Promise<void> {

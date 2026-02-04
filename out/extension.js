@@ -157,13 +157,21 @@ function activate(context) {
         if (!(0, types_1.isSnippet)(snippet)) {
             return;
         }
-        await sendToTerminal(snippet.content, false);
+        const resolved = await resolvePlaceholders(snippet.content);
+        if (resolved === undefined) {
+            return;
+        }
+        await sendToTerminal(resolved, false);
     }));
     context.subscriptions.push(vscode.commands.registerCommand('snip2term.runSnippet', async (treeItem) => {
         if (!(0, types_1.isSnippet)(treeItem.item)) {
             return;
         }
-        await sendToTerminal(treeItem.item.content, true);
+        const resolved = await resolvePlaceholders(treeItem.item.content);
+        if (resolved === undefined) {
+            return;
+        }
+        await sendToTerminal(resolved, true);
     }));
     // Export a single folder
     context.subscriptions.push(vscode.commands.registerCommand('snip2term.exportFolder', async (treeItem) => {
@@ -212,6 +220,36 @@ function activate(context) {
             }
         }
     }));
+}
+async function resolvePlaceholders(content) {
+    const regex = /\{prompt:\s*([^;}]+?)(?:;\s*list:\s*([^}]+))?\}/g;
+    const matches = [...content.matchAll(regex)];
+    if (matches.length === 0) {
+        return content;
+    }
+    let resolved = content;
+    for (const match of matches) {
+        const fullMatch = match[0];
+        const promptText = match[1].trim();
+        const listStr = match[2];
+        let value;
+        if (listStr) {
+            const items = listStr.split(',').map(s => s.trim());
+            value = await vscode.window.showQuickPick(items, {
+                placeHolder: promptText
+            });
+        }
+        else {
+            value = await vscode.window.showInputBox({
+                prompt: promptText
+            });
+        }
+        if (value === undefined) {
+            return undefined;
+        }
+        resolved = resolved.replace(fullMatch, value);
+    }
+    return resolved;
 }
 async function sendToTerminal(content, execute) {
     let terminal = vscode.window.activeTerminal;
