@@ -31,8 +31,48 @@ export class SnippetTreeProvider implements vscode.TreeDataProvider<SnippetTreeI
   private _onDidChangeTreeData = new vscode.EventEmitter<SnippetTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+  private filterQuery: string = '';
+  private matchingSnippetIds: Set<string> = new Set();
+  private matchingFolderIds: Set<string> = new Set();
+  private ancestorFolderIds: Set<string> = new Set();
+
   constructor(private snippetManager: SnippetManager) {
     snippetManager.onDidChangeData(() => this.refresh());
+  }
+
+  setFilter(query: string): void {
+    this.filterQuery = query;
+    if (query) {
+      const matchingSnippets = this.snippetManager.searchSnippets(query);
+      const matchingFolders = this.snippetManager.searchFolders(query);
+
+      this.matchingSnippetIds = new Set(matchingSnippets.map(s => s.id));
+      this.matchingFolderIds = new Set(matchingFolders.map(f => f.id));
+
+      // Collect all ancestor folders of matching items
+      this.ancestorFolderIds = new Set<string>();
+      for (const snippet of matchingSnippets) {
+        const ancestors = this.snippetManager.getAncestorIds(snippet.parentId);
+        ancestors.forEach(id => this.ancestorFolderIds.add(id));
+      }
+      for (const folder of matchingFolders) {
+        const ancestors = this.snippetManager.getAncestorIds(folder.parentId);
+        ancestors.forEach(id => this.ancestorFolderIds.add(id));
+      }
+    } else {
+      this.matchingSnippetIds.clear();
+      this.matchingFolderIds.clear();
+      this.ancestorFolderIds.clear();
+    }
+    this.refresh();
+  }
+
+  clearFilter(): void {
+    this.setFilter('');
+  }
+
+  isFiltering(): boolean {
+    return this.filterQuery.length > 0;
   }
 
   refresh(): void {
@@ -45,18 +85,44 @@ export class SnippetTreeProvider implements vscode.TreeDataProvider<SnippetTreeI
 
   getChildren(element?: SnippetTreeItem): Thenable<SnippetTreeItem[]> {
     const parentId = element ? element.item.id : null;
-    const children = this.snippetManager.getChildren(parentId);
+    let children = this.snippetManager.getChildren(parentId);
+
+    // Apply filter if active
+    if (this.filterQuery) {
+      children = children.filter(item => {
+        if (isSnippet(item)) {
+          return this.matchingSnippetIds.has(item.id);
+        } else {
+          // Show folder if it matches, or if it's an ancestor of a matching item
+          return this.matchingFolderIds.has(item.id) || this.ancestorFolderIds.has(item.id);
+        }
+      });
+    }
 
     return Promise.resolve(
       children.map(item => {
-        const hasChildren = isFolder(item) && this.snippetManager.getChildren(item.id).length > 0;
+        const hasChildren = isFolder(item) && this.getFilteredChildCount(item.id) > 0;
         const collapsibleState = isFolder(item)
-          ? (hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Collapsed)
+          ? (this.filterQuery ? vscode.TreeItemCollapsibleState.Expanded : (hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Collapsed))
           : vscode.TreeItemCollapsibleState.None;
 
         return new SnippetTreeItem(item, collapsibleState);
       })
     );
+  }
+
+  private getFilteredChildCount(parentId: string): number {
+    const children = this.snippetManager.getChildren(parentId);
+    if (!this.filterQuery) {
+      return children.length;
+    }
+    return children.filter(item => {
+      if (isSnippet(item)) {
+        return this.matchingSnippetIds.has(item.id);
+      } else {
+        return this.matchingFolderIds.has(item.id) || this.ancestorFolderIds.has(item.id);
+      }
+    }).length;
   }
 
   getParent(element: SnippetTreeItem): Thenable<SnippetTreeItem | null> {

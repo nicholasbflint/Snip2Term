@@ -65,9 +65,44 @@ class SnippetTreeProvider {
     snippetManager;
     _onDidChangeTreeData = new vscode.EventEmitter();
     onDidChangeTreeData = this._onDidChangeTreeData.event;
+    filterQuery = '';
+    matchingSnippetIds = new Set();
+    matchingFolderIds = new Set();
+    ancestorFolderIds = new Set();
     constructor(snippetManager) {
         this.snippetManager = snippetManager;
         snippetManager.onDidChangeData(() => this.refresh());
+    }
+    setFilter(query) {
+        this.filterQuery = query;
+        if (query) {
+            const matchingSnippets = this.snippetManager.searchSnippets(query);
+            const matchingFolders = this.snippetManager.searchFolders(query);
+            this.matchingSnippetIds = new Set(matchingSnippets.map(s => s.id));
+            this.matchingFolderIds = new Set(matchingFolders.map(f => f.id));
+            // Collect all ancestor folders of matching items
+            this.ancestorFolderIds = new Set();
+            for (const snippet of matchingSnippets) {
+                const ancestors = this.snippetManager.getAncestorIds(snippet.parentId);
+                ancestors.forEach(id => this.ancestorFolderIds.add(id));
+            }
+            for (const folder of matchingFolders) {
+                const ancestors = this.snippetManager.getAncestorIds(folder.parentId);
+                ancestors.forEach(id => this.ancestorFolderIds.add(id));
+            }
+        }
+        else {
+            this.matchingSnippetIds.clear();
+            this.matchingFolderIds.clear();
+            this.ancestorFolderIds.clear();
+        }
+        this.refresh();
+    }
+    clearFilter() {
+        this.setFilter('');
+    }
+    isFiltering() {
+        return this.filterQuery.length > 0;
     }
     refresh() {
         this._onDidChangeTreeData.fire();
@@ -77,14 +112,40 @@ class SnippetTreeProvider {
     }
     getChildren(element) {
         const parentId = element ? element.item.id : null;
-        const children = this.snippetManager.getChildren(parentId);
+        let children = this.snippetManager.getChildren(parentId);
+        // Apply filter if active
+        if (this.filterQuery) {
+            children = children.filter(item => {
+                if ((0, types_1.isSnippet)(item)) {
+                    return this.matchingSnippetIds.has(item.id);
+                }
+                else {
+                    // Show folder if it matches, or if it's an ancestor of a matching item
+                    return this.matchingFolderIds.has(item.id) || this.ancestorFolderIds.has(item.id);
+                }
+            });
+        }
         return Promise.resolve(children.map(item => {
-            const hasChildren = (0, types_1.isFolder)(item) && this.snippetManager.getChildren(item.id).length > 0;
+            const hasChildren = (0, types_1.isFolder)(item) && this.getFilteredChildCount(item.id) > 0;
             const collapsibleState = (0, types_1.isFolder)(item)
-                ? (hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Collapsed)
+                ? (this.filterQuery ? vscode.TreeItemCollapsibleState.Expanded : (hasChildren ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Collapsed))
                 : vscode.TreeItemCollapsibleState.None;
             return new SnippetTreeItem(item, collapsibleState);
         }));
+    }
+    getFilteredChildCount(parentId) {
+        const children = this.snippetManager.getChildren(parentId);
+        if (!this.filterQuery) {
+            return children.length;
+        }
+        return children.filter(item => {
+            if ((0, types_1.isSnippet)(item)) {
+                return this.matchingSnippetIds.has(item.id);
+            }
+            else {
+                return this.matchingFolderIds.has(item.id) || this.ancestorFolderIds.has(item.id);
+            }
+        }).length;
     }
     getParent(element) {
         const parentId = element.item.parentId;

@@ -260,6 +260,35 @@ export class SnippetManager {
     await this.saveData();
   }
 
+  // Search snippets by name or content (case-insensitive)
+  searchSnippets(query: string): Snippet[] {
+    const lowerQuery = query.toLowerCase();
+    return this.data.snippets.filter(s =>
+      s.name.toLowerCase().includes(lowerQuery) ||
+      s.content.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  // Search folders by name (case-insensitive)
+  searchFolders(query: string): Folder[] {
+    const lowerQuery = query.toLowerCase();
+    return this.data.folders.filter(f =>
+      f.name.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  // Get all ancestor folder IDs for a given parent ID
+  getAncestorIds(parentId: string | null): Set<string> {
+    const ancestors = new Set<string>();
+    let current = parentId;
+    while (current) {
+      ancestors.add(current);
+      const folder = this.getFolder(current);
+      current = folder?.parentId ?? null;
+    }
+    return ancestors;
+  }
+
   // Import data from JSON string
   // mode: 'replace' = overwrite all, 'merge' = update matching IDs + add new, 'append' = add all as new items
   async importData(jsonString: string, mode: 'replace' | 'merge' | 'append'): Promise<{ folders: number; snippets: number }> {

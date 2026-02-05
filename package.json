@@ -2,7 +2,7 @@
   "name": "snip2term",
   "displayName": "Snip2Term",
   "description": "Organize terminal snippets and send them to the terminal with a click",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "snip2term",
   "engines": {
     "vscode": "^1.85.0"
@@ -86,19 +86,39 @@
       {
         "command": "snip2term.exportFolder",
         "title": "Export Folder"
+      },
+      {
+        "command": "snip2term.search",
+        "title": "Search Snippets",
+        "icon": "$(search)"
+      },
+      {
+        "command": "snip2term.clearSearch",
+        "title": "Clear Search",
+        "icon": "$(close)"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "command": "snip2term.search",
+          "when": "view == snip2termView && !snip2term.searchActive",
+          "group": "navigation@1"
+        },
+        {
+          "command": "snip2term.clearSearch",
+          "when": "view == snip2termView && snip2term.searchActive",
+          "group": "navigation@1"
+        },
+        {
           "command": "snip2term.createFolderAtRoot",
           "when": "view == snip2termView",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "snip2term.createSnippetAtRoot",
           "when": "view == snip2termView",
-          "group": "navigation"
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [

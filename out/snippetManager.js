@@ -272,6 +272,28 @@ class SnippetManager {
         }
         await this.saveData();
     }
+    // Search snippets by name or content (case-insensitive)
+    searchSnippets(query) {
+        const lowerQuery = query.toLowerCase();
+        return this.data.snippets.filter(s => s.name.toLowerCase().includes(lowerQuery) ||
+            s.content.toLowerCase().includes(lowerQuery));
+    }
+    // Search folders by name (case-insensitive)
+    searchFolders(query) {
+        const lowerQuery = query.toLowerCase();
+        return this.data.folders.filter(f => f.name.toLowerCase().includes(lowerQuery));
+    }
+    // Get all ancestor folder IDs for a given parent ID
+    getAncestorIds(parentId) {
+        const ancestors = new Set();
+        let current = parentId;
+        while (current) {
+            ancestors.add(current);
+            const folder = this.getFolder(current);
+            current = folder?.parentId ?? null;
+        }
+        return ancestors;
+    }
     // Import data from JSON string
     // mode: 'replace' = overwrite all, 'merge' = update matching IDs + add new, 'append' = add all as new items
     async importData(jsonString, mode) {

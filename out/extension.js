@@ -220,6 +220,22 @@ function activate(context) {
             }
         }
     }));
+    // Search snippets
+    context.subscriptions.push(vscode.commands.registerCommand('snip2term.search', async () => {
+        const query = await vscode.window.showInputBox({
+            prompt: 'Search snippets by name or content',
+            placeHolder: 'Enter search term...'
+        });
+        if (query !== undefined) {
+            treeProvider.setFilter(query);
+            vscode.commands.executeCommand('setContext', 'snip2term.searchActive', query.length > 0);
+        }
+    }));
+    // Clear search
+    context.subscriptions.push(vscode.commands.registerCommand('snip2term.clearSearch', () => {
+        treeProvider.clearFilter();
+        vscode.commands.executeCommand('setContext', 'snip2term.searchActive', false);
+    }));
 }
 async function resolvePlaceholders(content) {
     const regex = /\{prompt:\s*([^;}]+?)(?:;\s*list:\s*([^}]+))?\}/g;
